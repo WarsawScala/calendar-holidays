@@ -3,17 +3,23 @@ package pl.warsawscala.rest.controller
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Singleton
 
+import com.google.inject.Inject
 import com.typesafe.scalalogging.StrictLogging
 import org.joda.time.DateTime
+import play.api.Configuration
 import play.api.mvc.{Action, Controller, EssentialAction}
 
 @Singleton
-class GoogleCalendarController extends Controller with StrictLogging {
+class GoogleCalendarController @Inject() (config: Configuration) extends Controller with StrictLogging {
 
   val counter = new AtomicInteger()
 
   var map = Map[Int, (DateTime, DateTime)]()
 
+
+  val scope = config.getString("restapi.config.scope").getOrElse("")
+  val clientId = config.getString("restapi.config.clientId").getOrElse("")
+  val domain = config.getString("restapi.config.domain").getOrElse("")
   val START = "start"
   val END = "end"
   val CODE = "code"
@@ -29,9 +35,13 @@ class GoogleCalendarController extends Controller with StrictLogging {
           val id = state.head.toInt
           NotFound(s"$id")
         case None =>
-          map = map + (counter.incrementAndGet() -> (startTime,endTime))
-          Ok(s"$startTime $endTime")
-          //Redirect(s"http://local/$startTime/$endTime")
+          val state = counter.incrementAndGet();
+          val redirect_uri = domain + s"?start=$startTime&end=$endTime"
+          map = map + (state -> (startTime,endTime))
+//          Ok(s"$startTime $endTime")
+
+          val uri = s"https://accounts.google.com/o/oauth2/v2/auth?scope=$scope&state=$state&redirect_uri=$redirect_uri%2Fcode&,response_type=code&client_id=$clientId"
+          Redirect(uri)
       }
 
 
