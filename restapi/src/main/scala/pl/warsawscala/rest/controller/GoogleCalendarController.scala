@@ -6,6 +6,7 @@ import javax.inject.Singleton
 import com.google.inject.Inject
 import com.typesafe.scalalogging.StrictLogging
 import org.joda.time.DateTime
+import pl.warsawscala.rest.Helpers
 import play.api.Configuration
 import play.api.mvc.{Action, Controller, EssentialAction}
 
@@ -16,14 +17,17 @@ class GoogleCalendarController @Inject() (config: Configuration) extends Control
 
   var map = Map[Int, (DateTime, DateTime)]()
 
-
-  val scope = config.getString("restapi.config.scope").getOrElse("")
-  val clientId = config.getString("restapi.config.clientId").getOrElse("")
-  val domain = config.getString("restapi.config.domain").getOrElse("")
   val START = "start"
   val END = "end"
   val CODE = "code"
   val STATE = "state"
+  val PROMPT = "prompt"
+  val SCOPE = "scope"
+  val RESPONSE_TYPE = "response_type"
+  val CLIENT_ID = "client_id"
+  val NONCE = "nonce"
+  val REDIRECT_URI = "redirect_uri"
+  val SELECT_ACCOUNT = "select_account"
 
   def holidays(): EssentialAction = Action {
     r =>
@@ -35,16 +39,23 @@ class GoogleCalendarController @Inject() (config: Configuration) extends Control
           val id = state.head.toInt
           NotFound(s"$id")
         case None =>
-          val state = counter.incrementAndGet();
-          val redirect_uri = domain + s"?start=$startTime&end=$endTime"
-          map = map + (state -> (startTime,endTime))
-//          Ok(s"$startTime $endTime")
+          //val redirect_uri = domain + s"?start=$startTime&end=$endTime"
+          val params = Map(
+            RESPONSE_TYPE   -> config.getString("restapi.oAuth2.responseType").getOrElse(""),
+            CLIENT_ID       -> config.getString("restapi.oAuth2.clientId").getOrElse(""),
+            NONCE           -> config.getString("restapi.oAuth2.nonce").getOrElse(""),
+            REDIRECT_URI    -> config.getString("restapi.oAuth2.redirectURI").getOrElse(""),
+            //REDIRECT_URI    -> redirect_uri,
+            SCOPE           -> config.getString("restapi.oAuth2.scope").getOrElse(""),
+            STATE           -> config.getString("restapi.clientName").getOrElse(""),
+            PROMPT          -> SELECT_ACCOUNT
+          )
 
-          val uri = s"https://accounts.google.com/o/oauth2/v2/auth?scope=$scope&state=$state&redirect_uri=$redirect_uri%2Fcode&,response_type=code&client_id=$clientId"
+          val uri = config.getString("restapi.oAuth2.authURL").getOrElse("") + "?" + Helpers.encodeParam(params)
+          val state = counter.incrementAndGet();
+          map = map + (state -> (startTime,endTime))
           Redirect(uri)
       }
-
-
   }
 
 }
