@@ -12,12 +12,26 @@ object MyCalendar {
   //def apply(Code: String): MyCalendar = MyCalendarImp(Code)
   def apply(Code: String): MyCalendar = MyCalendarStub()
 }
-/*
+
 case class MyCalendarImp(Code: String) extends MyCalendar {
   def getEventsFor(from: LocalDate, to: LocalDate): Future[Seq[PlannedEvent]] = {
+    Future {
+      val EventsList = getEventsByDate(Code, from, to)
+      ParseEvents(EventsList)
+    }
   }
 }
-*/
+
+object MyCalendarImp {
+  def ParseEvents(EventsList: List[GoogleEvent]): List[PlannedEvent] = {
+    EventsList.map(e => PlannedEvent(e.startDate, e.endDate, ParseTags(e.summary)))
+  }
+
+  def ParseTags(Summary: String): List[String] = {
+    //Parsowanie Tagów
+  }
+}
+
 
 case class MyCalendarStub() extends MyCalendar {
   def getEventsFor(from: LocalDate, to: LocalDate): Future[Seq[PlannedEvent]] = {
