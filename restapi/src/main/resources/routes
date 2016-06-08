@@ -1,2 +1,3 @@
-GET   /     pl.warsawscala.rest.controller.GoogleCalendarController.holidays(startTime:org.joda.time.DateTime = org.joda.time.DateTime.now,endTime:org.joda.time.DateTime = org.joda.time.DateTime.now)
+GET   /                    pl.warsawscala.rest.controller.GoogleCalendarController.holidays()
+GET   /oauth2callback      pl.warsawscala.rest.controller.GoogleCalendarController.callback()
 
