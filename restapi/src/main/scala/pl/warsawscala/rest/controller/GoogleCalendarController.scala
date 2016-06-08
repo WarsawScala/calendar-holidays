@@ -1,21 +1,22 @@
 package pl.warsawscala.rest.controller
 
-import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Singleton
 
 import com.google.inject.Inject
 import com.typesafe.scalalogging.StrictLogging
 import org.joda.time.DateTime
 import pl.warsawscala.rest.Helpers
+import play.api.libs.ws._
 import play.api.Configuration
 import play.api.mvc.{Action, Controller, EssentialAction}
 
+import scala.util.Random
+
 @Singleton
-class GoogleCalendarController @Inject() (config: Configuration) extends Controller with StrictLogging {
+class GoogleCalendarController @Inject() (config: Configuration,
+                                          ws: WSClient) extends Controller with StrictLogging {
 
-  val counter = new AtomicInteger()
-
-  var map = Map[Int, (DateTime, DateTime)]()
+  var stateMap = Map[String, (DateTime, DateTime)]()
 
   val START = "start"
   val END = "end"
@@ -36,24 +37,22 @@ class GoogleCalendarController @Inject() (config: Configuration) extends Control
       logger.debug(s"$startTime $endTime")
       r.queryString.get(STATE) match {
         case Some(state) =>
-          val id = state.head.toInt
-          NotFound(s"$id")
+          NotFound(s"$state")
         case None =>
-          //val redirect_uri = domain + s"?start=$startTime&end=$endTime"
+          val tempState = Random.nextString(6)
+          stateMap = stateMap + (tempState -> (startTime, endTime))
+
           val params = Map(
             RESPONSE_TYPE -> config.getString("restapi.oAuth2.responseType").getOrElse(""),
             CLIENT_ID -> config.getString("restapi.oAuth2.clientId").getOrElse(""),
             NONCE -> config.getString("restapi.oAuth2.nonce").getOrElse(""),
             REDIRECT_URI -> config.getString("restapi.oAuth2.redirectURI").getOrElse(""),
-            //REDIRECT_URI    -> redirect_uri,
             SCOPE -> config.getString("restapi.oAuth2.scope").getOrElse(""),
-            STATE -> config.getString("restapi.clientName").getOrElse(""),
+            STATE -> tempState,
             PROMPT -> SELECT_ACCOUNT
           )
 
           val uri = config.getString("restapi.oAuth2.authURL").getOrElse("") + "?" + Helpers.encodeParam(params)
-          val state = counter.incrementAndGet();
-          map = map + (state ->(startTime, endTime))
           Redirect(uri)
       }
   }
@@ -61,9 +60,10 @@ class GoogleCalendarController @Inject() (config: Configuration) extends Control
   def callback() = Action { request =>
     request.queryString.get(CODE).getOrElse("") match {
       case Some(seq) => {
-        Redirect(routes.GoogleCalendarController.holidays()).withSession {
-          CODE -> ???
-        }
+        val state = request.queryString.get(STATE).getOrElse("")
+        stateMap.get(state)
+        //Todo: do something...
+        ???
       }
       case None => Ok("Cant't get authCode")
     }
