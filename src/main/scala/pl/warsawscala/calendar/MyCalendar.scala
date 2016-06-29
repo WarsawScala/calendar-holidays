@@ -29,10 +29,6 @@ case class MyCalendarImpl(code: String) extends MyCalendar {
     getAuthToken flatMap {
       getCalendarEntries(_) flatMap { s => s }
     }
-
-    //todo
-    //val EventsList = getEventsByDate(Code, from, to)
-    //ParseEvents(EventsList)
   }
 
   def getAuthToken: Future[String] = {
