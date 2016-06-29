@@ -58,11 +58,11 @@ class GoogleCalendarController @Inject() (config: Configuration,
   }
 
   def callback() = Action { request =>
-    request.queryString.get(CODE).getOrElse("") match {
-      case Some(seq) => {
-        val state = request.queryString.get(STATE).get.head // FIXME
-        stateMap.get(state)
-        //Todo: do something...
+    request.queryString.get(CODE) match {
+      case Some(code) => {
+        val state = request.queryString.get(STATE).get.head
+        stateMap.getOrElse(state, (DateTime.now(), DateTime.now()))
+
         ???
       }
       case None => Ok("Cant't get authCode")
