@@ -1,11 +1,11 @@
 package pl.warsawscala.calendar
 
 import java.time.LocalDate
-import scala.concurrent.Future
 
+import scala.concurrent.Future
 import com.ning.http.client.AsyncHttpClientConfig
-import play.api.libs.ws.DefaultWSClientConfig
-import play.api.libs.ws.ning.{NingAsyncHttpClientConfigBuilder, NingWSClient}
+// import play.api.libs.ws.DefaultWSClientConfig
+import play.api.libs.ws.ning.{NingAsyncHttpClientConfigBuilder, NingWSClient, NingWSClientConfig}
 
 import scala.concurrent.Future
 
@@ -19,7 +19,7 @@ object MyCalendar {
 }
 
 case class MyCalendarImpl(code: String) extends MyCalendar {
-  val config = new NingAsyncHttpClientConfigBuilder(DefaultWSClientConfig()).build
+  val config = new NingAsyncHttpClientConfigBuilder(new NingWSClientConfig()).build
   val builder = new AsyncHttpClientConfig.Builder(config)
   val client = new NingWSClient(builder.build)
 
