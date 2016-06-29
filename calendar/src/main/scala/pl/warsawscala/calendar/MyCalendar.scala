@@ -71,9 +71,9 @@ case class MyCalendarStub() extends MyCalendar {
 
   def getEventsFor(from: LocalDate, to: LocalDate): Future[Seq[PlannedEvent]] = {
     Future {
-      val myPlannedEvent: PlannedEvent = PlannedEvent(LocalDate.now(), LocalDate.now(), List("holiday", "icecreamdays"))
-      val myPlannedEvent2: PlannedEvent = PlannedEvent(LocalDate.now(), LocalDate.now(), List("grilldays"))
-      val myPlannedEvent3: PlannedEvent = PlannedEvent(LocalDate.now(), LocalDate.now(), List("holiday"))
+      val myPlannedEvent: PlannedEvent = PlannedEvent(LocalDate.now(), LocalDate.now().plusDays(1), List("URLAUB", "icecreamdays"))
+      val myPlannedEvent2: PlannedEvent = PlannedEvent(LocalDate.now(), LocalDate.now().plusDays(1), List("grilldays"))
+      val myPlannedEvent3: PlannedEvent = PlannedEvent(LocalDate.now(), LocalDate.now().plusDays(2), List("URLAUB"))
       List(myPlannedEvent, myPlannedEvent2, myPlannedEvent3)
     }
   }
