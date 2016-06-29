@@ -78,8 +78,8 @@ case class MyCalendarStub() extends MyCalendar {
     }
   }
 }
-/*
+
 object MyCalendar {
   def apply(code: String): MyCalendar = MyCalendarImpl(code)
-}*/
+}
 
