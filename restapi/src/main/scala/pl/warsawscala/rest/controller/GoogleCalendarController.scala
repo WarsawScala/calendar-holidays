@@ -60,7 +60,7 @@ class GoogleCalendarController @Inject() (config: Configuration,
   def callback() = Action { request =>
     request.queryString.get(CODE).getOrElse("") match {
       case Some(seq) => {
-        val state = request.queryString.get(STATE).getOrElse("")
+        val state = request.queryString.get(STATE).get.head // FIXME
         stateMap.get(state)
         //Todo: do something...
         ???
