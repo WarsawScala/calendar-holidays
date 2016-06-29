@@ -66,6 +66,7 @@ class GoogleCalendarController @Inject() (config: Configuration,
   def callback() = Action { request =>
     request.queryString.get(CODE) match {
       case Some(code) => {
+        println("GOT THE CODE")
         val state = request.queryString.get(STATE).get.head
         val timeBounds = stateMap.getOrElse(state, (DateTime.now(), DateTime.now()))
         val curCalendar = MyCalendar.apply(code.head)
@@ -75,7 +76,10 @@ class GoogleCalendarController @Inject() (config: Configuration,
 
         Ok(events.toString())
       }
-      case None => Ok("Cant't get authCode")
+      case None => {
+        println("DIDN'T GET THE CODE")
+        Ok("Cant't get authCode")
+      }
     }
   }
 }
