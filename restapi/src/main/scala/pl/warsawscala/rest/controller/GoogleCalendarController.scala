@@ -1,11 +1,12 @@
 package pl.warsawscala.rest.controller
 
+import java.time.ZoneId
 import java.util.Date
 import javax.inject.Singleton
 
 import com.google.inject.Inject
 import com.typesafe.scalalogging.StrictLogging
-import org.joda.time.DateTime
+import org.joda.time.{DateTime, Seconds}
 import pl.warsawscala.rest.Helpers
 import play.api.libs.ws._
 import play.api.Configuration
@@ -13,6 +14,8 @@ import play.api.mvc.{Action, Controller, EssentialAction}
 import pl.warsawscala.calendar
 import pl.warsawscala.calendar.MyCalendar
 
+import scala.concurrent.Await
+import scala.concurrent.duration._
 import scala.util.Random
 
 @Singleton
@@ -66,9 +69,11 @@ class GoogleCalendarController @Inject() (config: Configuration,
         val state = request.queryString.get(STATE).get.head
         val timeBounds = stateMap.getOrElse(state, (DateTime.now(), DateTime.now()))
         val curCalendar = MyCalendar.apply(code.head)
-        val start: Date = timeBounds._1.toDate()
-        curCalendar.getEventsFor(timeBounds._1, timeBounds._2)
-        ???
+        val start: java.time.LocalDate = timeBounds._1.toDate.toInstant.atZone(ZoneId.systemDefault()).toLocalDate
+        val end: java.time.LocalDate = timeBounds._2.toDate.toInstant.atZone(ZoneId.systemDefault()).toLocalDate
+        val events = Await.result(curCalendar.getEventsFor(start, end), 10.second)
+
+        Ok(events.toString())
       }
       case None => Ok("Cant't get authCode")
     }
