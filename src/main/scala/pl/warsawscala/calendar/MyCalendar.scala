@@ -1,6 +1,7 @@
 package pl.warsawscala.calendar
 
 import java.time.LocalDate
+import scala.concurrent.Future
 
 import com.ning.http.client.AsyncHttpClientConfig
 import play.api.libs.ws.DefaultWSClientConfig
@@ -81,6 +82,4 @@ case class MyCalendarStub() extends MyCalendar {
   }
 }
 
-
 case class PlannedEvent(startDate: LocalDate, endDateExclusive: LocalDate, tags: Seq[String])
-

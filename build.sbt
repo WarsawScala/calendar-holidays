@@ -17,3 +17,5 @@ lazy val restapi = Project("restapi", file("restapi"))
     `com.typesafe.play`
   )
 )
+
+libraryDependencies ++= Seq("org.specs2" %% "specs2-mock" % "3.8" % "test")
