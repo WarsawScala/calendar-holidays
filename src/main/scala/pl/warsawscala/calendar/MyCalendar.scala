@@ -9,13 +9,11 @@ import play.api.libs.ws.ning.{NingAsyncHttpClientConfigBuilder, NingWSClient, Ni
 
 import scala.concurrent.Future
 
+case class PlannedEvent(startDate: LocalDate, endDateExclusive: LocalDate, tags: Seq[String])
+case class GoogleEvent(startDate: LocalDate, endDate: LocalDate, summary: String)
+
 trait MyCalendar {
   def getEventsFor(from: LocalDate, to: LocalDate): Future[Seq[PlannedEvent]] // ???
-}
-
-object MyCalendar {
-  //def apply(Code: String): MyCalendar = MyCalendarImp(Code)
-  def apply(code: String): MyCalendar = MyCalendarImpl(code)
 }
 
 case class MyCalendarImpl(code: String) extends MyCalendar {
@@ -26,14 +24,9 @@ case class MyCalendarImpl(code: String) extends MyCalendar {
   import scala.concurrent.ExecutionContext.Implicits.global
 
   def getEventsFor(from: LocalDate, to: LocalDate): Future[Seq[PlannedEvent]] = {
-
     getAuthToken flatMap {
       getCalendarEntries(_) flatMap { s => s }
     }
-
-    //todo
-    //val EventsList = getEventsByDate(Code, from, to)
-    //ParseEvents(EventsList)
   }
 
   def getAuthToken: Future[String] = {
@@ -85,5 +78,8 @@ case class MyCalendarStub() extends MyCalendar {
     }
   }
 }
+/*
+object MyCalendar {
+  def apply(code: String): MyCalendar = MyCalendarImpl(code)
+}*/
 
-case class PlannedEvent(startDate: LocalDate, endDateExclusive: LocalDate, tags: Seq[String])
