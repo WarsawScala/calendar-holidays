@@ -3,7 +3,7 @@ package pl.warsawscala.calendar
 import java.time.LocalDate
 
 import scala.concurrent._
-import ExecutionContext.Implicits.global
+import java.time.temporal.ChronoUnit.DAYS
 
 trait HolidayEngine {
   /**
@@ -35,7 +35,9 @@ class HolidayEngineImpl(myCalendar: MyCalendar) extends HolidayEngine {
     * @return liczbę zaplanowanych dni urlopowych
     */
   override def countHolidays(from: LocalDate, to: LocalDate): Future[Int] = myCalendar.getEventsFor(from, to).map{ seg =>
-    seg.count( event => event.tags.contains(HOLIDAY_TAG)) // FIXME
+    seg.filter( _.tags.contains(HOLIDAY_TAG))
+        .map( event => DAYS.between(event.startDate, event.endDateExclusive)) // check if -1 is needed
+      .sum.toInt
   }
 
   /**
