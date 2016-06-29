@@ -6,7 +6,7 @@ scalaVersion in Global := "2.11.8"
 
 val `com.typesafe.scala-logging_scala-logging` = "com.typesafe.scala-logging" %% "scala-logging" % "3.4.0"
 //val `pl.warsawscala.calendar` = "pl.warsawscala.calendar" %% "calendar-holidays" % "1.0"
-val `com.typesafe.play` = "com.typesafe.play" %% "play-ws" % "2.4.8"
+val `com.typesafe.play` = "com.typesafe.play" %% "play-ws" % "2.5.4"
 
 lazy val calendar = project.in(file("calendar"))
   .settings(
