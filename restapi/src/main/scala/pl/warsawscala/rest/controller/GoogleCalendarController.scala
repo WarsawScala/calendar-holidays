@@ -11,7 +11,7 @@ import pl.warsawscala.rest.Helpers
 import play.api.libs.ws._
 import play.api.Configuration
 import play.api.mvc.{Action, Controller, EssentialAction}
-import pl.warsawscala.calendar
+import pl.warsawscala.calendar.HolidayEngineImpl
 import pl.warsawscala.calendar.MyCalendar
 
 import scala.concurrent.Await
@@ -70,11 +70,12 @@ class GoogleCalendarController @Inject() (config: Configuration,
         val state = request.queryString.get(STATE).get.head
         val timeBounds = stateMap.getOrElse(state, (DateTime.now(), DateTime.now()))
         val curCalendar = MyCalendar(code.head, ws)
+        val holidayEngine = new HolidayEngineImpl(curCalendar)
         val start: java.time.LocalDate = timeBounds._1.toDate.toInstant.atZone(ZoneId.systemDefault()).toLocalDate
         val end: java.time.LocalDate = timeBounds._2.toDate.toInstant.atZone(ZoneId.systemDefault()).toLocalDate
-        val events = Await.result(curCalendar.getEventsFor(start, end), 10.second)
+        val leftDays = 26 - Await.result(holidayEngine.countHolidays(start, end), 10.second)
 
-        Ok(events.toString())
+        Ok(leftDays.toString())
       }
       case None => {
         println("DIDN'T GET THE CODE")
