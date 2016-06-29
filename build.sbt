@@ -8,7 +8,15 @@ val `com.typesafe.scala-logging_scala-logging` = "com.typesafe.scala-logging" %%
 //val `pl.warsawscala.calendar` = "pl.warsawscala.calendar" %% "calendar-holidays" % "1.0"
 val `com.typesafe.play` = "com.typesafe.play" %% "play-ws" % "2.4.8"
 
-lazy val restapi = Project("restapi", file("restapi"))
+lazy val calendar = project.in(file("calendar"))
+  .settings(
+  libraryDependencies ++= Seq(
+    "org.specs2" %% "specs2-mock" % "3.8" % "test",
+    `com.typesafe.play`
+  )
+)
+
+lazy val restapi = project.in(file("restapi"))
   .enablePlugins(PlayScala)
   .disablePlugins(PlayLayoutPlugin).settings(
   libraryDependencies ++= Seq(
@@ -16,9 +24,4 @@ lazy val restapi = Project("restapi", file("restapi"))
     ws,
     `com.typesafe.play`
   )
-)
-
-libraryDependencies ++= Seq(
-  "org.specs2" %% "specs2-mock" % "3.8" % "test",
-  `com.typesafe.play`
-)
+).dependsOn(calendar)

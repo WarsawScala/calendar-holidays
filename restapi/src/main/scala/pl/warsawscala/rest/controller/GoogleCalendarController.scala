@@ -1,5 +1,6 @@
 package pl.warsawscala.rest.controller
 
+import java.util.Date
 import javax.inject.Singleton
 
 import com.google.inject.Inject
@@ -9,6 +10,8 @@ import pl.warsawscala.rest.Helpers
 import play.api.libs.ws._
 import play.api.Configuration
 import play.api.mvc.{Action, Controller, EssentialAction}
+import pl.warsawscala.calendar
+import pl.warsawscala.calendar.MyCalendar
 
 import scala.util.Random
 
@@ -58,11 +61,13 @@ class GoogleCalendarController @Inject() (config: Configuration,
   }
 
   def callback() = Action { request =>
-    request.queryString.get(CODE).getOrElse("") match {
-      case Some(seq) => {
-        val state = request.queryString.get(STATE).get.head // FIXME
-        stateMap.get(state)
-        //Todo: do something...
+    request.queryString.get(CODE) match {
+      case Some(code) => {
+        val state = request.queryString.get(STATE).get.head
+        val timeBounds = stateMap.getOrElse(state, (DateTime.now(), DateTime.now()))
+        val curCalendar = MyCalendar.apply(code.head)
+        val start: Date = timeBounds._1.toDate()
+        curCalendar.getEventsFor(timeBounds._1, timeBounds._2)
         ???
       }
       case None => Ok("Cant't get authCode")
