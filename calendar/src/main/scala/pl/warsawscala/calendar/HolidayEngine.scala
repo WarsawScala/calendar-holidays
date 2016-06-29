@@ -8,18 +8,15 @@ import java.time.temporal.ChronoUnit.DAYS
 trait HolidayEngine {
   /**
     *
-    * @param from opcjonalna data od (jeżeli brak liczymy od początku bieżącego roku)
-    * @param to opcjonalna data do (jęzeli brak liczymy do końca bieżącego roku)
     * @return liczbę zaplanowanych dni urlopowych
     */
   def countHolidays(from: LocalDate, to: LocalDate): Future[Int]
 
   /**
-    *
-    * @param year rok dla którego liczymy pozostałe dni wolne (jeżeli brak liczymy dla bieżącego roku)
+    * @param year Dla pondanego roku oblicz dni urlopowe. Domyślnie liczy dla aktualnego roku.
     * @return liczba pozostałych dni urlopowych
     */
-  def countHolidaysLeftInYear(year: Int ): Future[Int]
+  def countHolidaysLeftInYear(year: Int = LocalDate.now().getYear): Future[Int]
 }
 
 object HolidayEngineImpl {
@@ -29,23 +26,13 @@ object HolidayEngineImpl {
 class HolidayEngineImpl(myCalendar: MyCalendar) extends HolidayEngine {
   import HolidayEngineImpl._
   import ExecutionContext.Implicits.global
-  /**
-    *
-    * @param from opcjonalna data od (jeżeli brak liczymy od początku bieżącego roku)
-    * @param to   opcjonalna data do (jęzeli brak liczymy do końca bieżącego roku)
-    * @return liczbę zaplanowanych dni urlopowych
-    */
+
   override def countHolidays(from: LocalDate, to: LocalDate): Future[Int] = myCalendar.getEventsFor(from, to).map{ seg =>
     seg.filter( _.tags.contains(HOLIDAY_TAG))
-        .map( event => DAYS.between(event.startDate, event.endDateExclusive))
+        .map( event => DAYS.between(event.startDate, event.endDateExclusive)) // counts length of event
       .sum.toInt
   }
 
-  /**
-    *
-    * @param year rok dla którego liczymy pozostałe dni wolne (jeżeli brak liczymy dla bieżącego roku)
-    * @return liczba pozostałych dni urlopowych
-    */
   override def countHolidaysLeftInYear(year: Int): Future[Int] = {
     val from = LocalDate.of(year, 1, 1)
     val to = LocalDate.of(year, 12, 31)
