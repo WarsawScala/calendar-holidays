@@ -3,23 +3,22 @@ package pl.warsawscala.calendar
 import java.time.LocalDate
 
 import scala.concurrent.Future
-import com.ning.http.client.AsyncHttpClientConfig
+import play.api.libs.ws.WSClient
+
 // import play.api.libs.ws.DefaultWSClientConfig
 import play.api.libs.ws.ning.{NingAsyncHttpClientConfigBuilder, NingWSClient, NingWSClientConfig}
 
 import scala.concurrent.Future
 
 case class PlannedEvent(startDate: LocalDate, endDateExclusive: LocalDate, tags: Seq[String])
+
 case class GoogleEvent(startDate: LocalDate, endDate: LocalDate, summary: String)
 
 trait MyCalendar {
   def getEventsFor(from: LocalDate, to: LocalDate): Future[Seq[PlannedEvent]] // ???
 }
 
-case class MyCalendarImpl(code: String) extends MyCalendar {
-  val config = new NingAsyncHttpClientConfigBuilder(new NingWSClientConfig()).build
-  val builder = new AsyncHttpClientConfig.Builder(config)
-  val client = new NingWSClient(builder.build)
+case class MyCalendarImpl(code: String, client: WSClient) extends MyCalendar {
 
   import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -67,6 +66,7 @@ case class MyCalendarImpl(code: String) extends MyCalendar {
 }
 
 case class MyCalendarStub() extends MyCalendar {
+
   import scala.concurrent.ExecutionContext.Implicits.global
 
   def getEventsFor(from: LocalDate, to: LocalDate): Future[Seq[PlannedEvent]] = {
@@ -80,6 +80,6 @@ case class MyCalendarStub() extends MyCalendar {
 }
 
 object MyCalendar {
-  def apply(code: String): MyCalendar = MyCalendarImpl(code)
+  def apply(code: String, client: WSClient): MyCalendar = MyCalendarImpl(code, client)
 }
 

@@ -69,7 +69,7 @@ class GoogleCalendarController @Inject() (config: Configuration,
         println("GOT THE CODE")
         val state = request.queryString.get(STATE).get.head
         val timeBounds = stateMap.getOrElse(state, (DateTime.now(), DateTime.now()))
-        val curCalendar = MyCalendar.apply(code.head)
+        val curCalendar = MyCalendar(code.head, ws)
         val start: java.time.LocalDate = timeBounds._1.toDate.toInstant.atZone(ZoneId.systemDefault()).toLocalDate
         val end: java.time.LocalDate = timeBounds._2.toDate.toInstant.atZone(ZoneId.systemDefault()).toLocalDate
         val events = Await.result(curCalendar.getEventsFor(start, end), 10.second)
