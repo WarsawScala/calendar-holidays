@@ -2,6 +2,9 @@ package pl.warsawscala.calendar
 
 import java.time.LocalDate
 
+import org.joda.time.DateTime
+import play.api.libs.json.{JsArray, JsValue}
+
 import scala.concurrent.Future
 import play.api.libs.ws.WSClient
 
@@ -43,11 +46,18 @@ case class MyCalendarImpl(code: String, client: WSClient) extends MyCalendar {
   }
 
   def getCalendarEntries(authToken: String) = {
-    client.url("https://www.googleapis.com/calendar/v3/users/me/calendarList")
+    client.url("https://www.googleapis.com/calendar/v3/calendars/primary/events")
       .withQueryString("access_token" -> authToken)
       .get() map {
       response =>
         println("Calendar API response list: " + response.json.toString())
+
+        val items = (response.json \ "items").as[List[JsValue]] map { item =>
+          val startDate = DateTime.parse((item \ "start" \ "datetime").as[String])
+          val endDate = DateTime.parse((item \ "end" \ "datetime").as[String])
+          val summary = (item \ "summary").as[String]
+          GoogleEvent(startDate.toLocalDate, endDate.toLocalDate, "123")
+        }
         MyCalendarStub().getEventsFor(LocalDate.now(), LocalDate.now())
     }
   }
