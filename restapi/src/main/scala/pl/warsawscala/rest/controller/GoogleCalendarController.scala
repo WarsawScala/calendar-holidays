@@ -6,6 +6,7 @@ import javax.inject.Singleton
 
 import com.google.inject.Inject
 import com.typesafe.scalalogging.StrictLogging
+import org.joda.time.format.DateTimeFormat
 import org.joda.time.{DateTime, Seconds}
 import pl.warsawscala.rest.Helpers
 import play.api.libs.ws._
@@ -38,8 +39,8 @@ class GoogleCalendarController @Inject() (config: Configuration,
 
   def holidays(): EssentialAction = Action {
     r =>
-      val startTime = r.queryString.get(START).map(str => DateTime.parse(str.head)).getOrElse(DateTime.now().withMonthOfYear(1).withTimeAtStartOfDay().withDayOfMonth(1))
-      val endTime = r.queryString.get(END).map(str => DateTime.parse(str.head)).getOrElse(DateTime.now().withMonthOfYear(12).withTimeAtStartOfDay().withDayOfMonth(31))
+      val startTime = r.queryString.get(START).map(str => DateTime.parse(str.head, DateTimeFormat.forPattern("dd-MMM-yy"))).getOrElse(DateTime.now().withMonthOfYear(1).withTimeAtStartOfDay().withDayOfMonth(1))
+      val endTime = r.queryString.get(END).map(str => DateTime.parse(str.head, DateTimeFormat.forPattern("dd-MMM-yy"))).getOrElse(DateTime.now().withMonthOfYear(12).withTimeAtStartOfDay().withDayOfMonth(31))
       logger.debug(s"$startTime $endTime")
       r.queryString.get(STATE) match {
         case Some(state) =>
