@@ -1,6 +1,8 @@
 package pl.warsawscala.calendar
 
-import java.time.LocalDate
+import java.time.{LocalDate, ZoneId}
+import java.text.SimpleDateFormat
+import java.util.Date
 
 import org.joda.time.DateTime
 import play.api.libs.json.{JsArray, JsValue}
@@ -12,6 +14,7 @@ import play.api.libs.ws.WSClient
 import play.api.libs.ws.ning.{NingAsyncHttpClientConfigBuilder, NingWSClient, NingWSClientConfig}
 
 import scala.concurrent.Future
+import scala.util.{Try, Success, Failure}
 
 case class PlannedEvent(startDate: LocalDate, endDateExclusive: LocalDate, tags: Seq[String])
 
@@ -27,7 +30,7 @@ case class MyCalendarImpl(code: String, client: WSClient) extends MyCalendar {
 
   def getEventsFor(from: LocalDate, to: LocalDate): Future[Seq[PlannedEvent]] = {
     getAuthToken flatMap {
-      getCalendarEntries(_) flatMap { s => s }
+      getCalendarEntries(_, from, to) flatMap { s => s }
     }
   }
 
@@ -45,20 +48,32 @@ case class MyCalendarImpl(code: String, client: WSClient) extends MyCalendar {
     }
   }
 
-  def getCalendarEntries(authToken: String) = {
-    client.url("https://www.googleapis.com/calendar/v3/calendars/primary/events")
-      .withQueryString("access_token" -> authToken)
-      .get() map {
-      response =>
-        println("Calendar API response list: " + response.json.toString())
+  def getCalendarEntries(authToken: String, from: LocalDate, to: LocalDate) = {
+    val rfc3999format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX")
+    Future {
+      client.url("https://www.googleapis.com/calendar/v3/calendars/primary/events")
+        .withQueryString("access_token" -> authToken)
+        .withQueryString("timeMin" -> rfc3999format.format(Date.from(from.atStartOfDay(ZoneId.systemDefault()).toInstant)))
+        .withQueryString("timeMax" -> rfc3999format.format(Date.from(to.atStartOfDay(ZoneId.systemDefault()).toInstant)))
+        .get() map {
+        response =>
+          println("Calendar API response list: " + response.json.toString())
 
-        val items = (response.json \ "items").as[List[JsValue]] map { item =>
-          val startDate = DateTime.parse((item \ "start" \ "datetime").as[String])
-          val endDate = DateTime.parse((item \ "end" \ "datetime").as[String])
-          val summary = (item \ "summary").as[String]
-          GoogleEvent(startDate.toLocalDate, endDate.toLocalDate, "123")
-        }
-        MyCalendarStub().getEventsFor(LocalDate.now(), LocalDate.now())
+          val items = (response.json \ "items").as[List[JsValue]] filter { item =>
+            Try(DateTime.parse((item \ "start" \ "date").as[String])) match {
+              case Success(v) =>
+                true
+              case Failure(e) =>
+                false
+            }
+          } map { item =>
+            val startDate = DateTime.parse((item \ "start" \ "date").as[String])
+            val endDate = DateTime.parse((item \ "end" \ "date").as[String])
+            val summary = (item \ "summary").as[String]
+            GoogleEvent(startDate.toDate.toInstant.atZone(ZoneId.systemDefault()).toLocalDate, endDate.toDate.toInstant.atZone(ZoneId.systemDefault()).toLocalDate, summary)
+          }
+          ParseEvents(items)
+      }
     }
   }
 
@@ -67,11 +82,7 @@ case class MyCalendarImpl(code: String, client: WSClient) extends MyCalendar {
   }
 
   def ParseTags(summary: String): List[String] = {
-    if (summary.startsWith("#")) {
-      summary.split("#").zipWithIndex.filter(_._2 % 2 == 0).map(_._1).toList
-    } else {
-      summary.split("#").zipWithIndex.filter(_._2 % 2 == 1).map(_._1).toList
-    }
+    summary.split("#").zipWithIndex.filter(_._2 % 2 == 1).map(_._1).toList
   }
 }
 
