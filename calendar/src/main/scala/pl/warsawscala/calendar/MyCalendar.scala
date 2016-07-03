@@ -30,7 +30,7 @@ case class MyCalendarImpl(code: String, client: WSClient) extends MyCalendar {
 
   def getEventsFor(from: LocalDate, to: LocalDate): Future[Seq[PlannedEvent]] = {
     getAuthToken flatMap {
-      getCalendarEntries(_, from, to) flatMap { s => s }
+      getCalendarEntries(_, from, to)
     }
   }
 
@@ -48,32 +48,28 @@ case class MyCalendarImpl(code: String, client: WSClient) extends MyCalendar {
     }
   }
 
-  def getCalendarEntries(authToken: String, from: LocalDate, to: LocalDate) = {
+  def getCalendarEntries(authToken: String, from: LocalDate, to: LocalDate): Future[Seq[PlannedEvent]] = {
     val rfc3999format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX")
-    Future {
-      client.url("https://www.googleapis.com/calendar/v3/calendars/primary/events")
-        .withQueryString("access_token" -> authToken)
-        .withQueryString("timeMin" -> rfc3999format.format(Date.from(from.atStartOfDay(ZoneId.systemDefault()).toInstant)))
-        .withQueryString("timeMax" -> rfc3999format.format(Date.from(to.atStartOfDay(ZoneId.systemDefault()).toInstant)))
-        .get() map {
-        response =>
-          println("Calendar API response list: " + response.json.toString())
-
-          val items = (response.json \ "items").as[List[JsValue]] filter { item =>
-            Try(DateTime.parse((item \ "start" \ "date").as[String])) match {
-              case Success(v) =>
-                true
-              case Failure(e) =>
-                false
-            }
-          } map { item =>
-            val startDate = DateTime.parse((item \ "start" \ "date").as[String])
-            val endDate = DateTime.parse((item \ "end" \ "date").as[String])
-            val summary = (item \ "summary").as[String]
-            GoogleEvent(startDate.toDate.toInstant.atZone(ZoneId.systemDefault()).toLocalDate, endDate.toDate.toInstant.atZone(ZoneId.systemDefault()).toLocalDate, summary)
+    client.url("https://www.googleapis.com/calendar/v3/calendars/primary/events")
+      .withQueryString("access_token" -> authToken)
+      .withQueryString("timeMin" -> rfc3999format.format(Date.from(from.atStartOfDay(ZoneId.systemDefault()).toInstant)))
+      .withQueryString("timeMax" -> rfc3999format.format(Date.from(to.atStartOfDay(ZoneId.systemDefault()).toInstant)))
+      .get() map {
+      response =>
+        val items = (response.json \ "items").as[List[JsValue]] filter { item =>
+          Try(DateTime.parse((item \ "start" \ "date").as[String])) match {
+            case Success(v) =>
+              true
+            case Failure(e) =>
+              false
           }
-          ParseEvents(items)
-      }
+        } map { item =>
+          val startDate = DateTime.parse((item \ "start" \ "date").as[String])
+          val endDate = DateTime.parse((item \ "end" \ "date").as[String])
+          val summary = (item \ "summary").as[String]
+          GoogleEvent(startDate.toDate.toInstant.atZone(ZoneId.systemDefault()).toLocalDate, endDate.toDate.toInstant.atZone(ZoneId.systemDefault()).toLocalDate, summary)
+        }
+        ParseEvents(items)
     }
   }
 
