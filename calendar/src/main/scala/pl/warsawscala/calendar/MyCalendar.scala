@@ -29,9 +29,10 @@ case class MyCalendarImpl(code: String, client: WSClient) extends MyCalendar {
   import scala.concurrent.ExecutionContext.Implicits.global
 
   def getEventsFor(from: LocalDate, to: LocalDate): Future[Seq[PlannedEvent]] = {
-    getAuthToken flatMap {
-      getCalendarEntries(_, from, to)
-    }
+    for {
+      token <- getAuthToken
+      events <- getCalendarEntries(token, from, to)
+    } yield events
   }
 
   def getAuthToken: Future[String] = {
