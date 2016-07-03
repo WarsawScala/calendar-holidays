@@ -42,6 +42,7 @@ case class MyCalendarImpl(code: String, client: WSClient) extends MyCalendar {
       "redirect_uri" -> "http://localhost:9000/oauth2callback",
       "grant_type" -> "authorization_code") map { case (key, value) => (key, Seq(value)) }
 
+
     client.url("https://www.googleapis.com/oauth2/v4/token")
       .withHeaders(("Content-Type", "application/x-www-form-urlencoded"))
       .post(postData) map {
